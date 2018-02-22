@@ -32,9 +32,8 @@ def giffetteria(bot, update, args):
         query = sanitize_query(args)
     else:
         query = ""
-    print(query)
     gif_urls = []
-    soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
+    soup = make_soup("http://giffetteria.it/?s=" + query)
     # get all gif links from page
     for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
         gif_urls.append(gif_link.get("data-gif"))
@@ -47,45 +46,40 @@ def giffetteria(bot, update, args):
     bot.send_document(chat_id=update.message.chat_id, document=random_gif)
 
 
+# finds gifs in page i, given query
+# returns gifs and thumbnails
+def find_gifs(i, query, gif_urls, gif_thumbs):
+    try:
+        soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
+    except:
+        return [], []
+    # get all gif links from page
+    for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
+        gif_urls.append(gif_link.get("data-gif"))
+        gif_thumbs.append(gif_link.get("data-thumb"))
+    return gif_urls, gif_thumbs
+
+
 def inlinequery(bot, update):
     """Handle the inline query. And looks for gifs"""
     query = update.inline_query.query
-    print(query)
     gif_urls = []
     gif_thumbs = []
-    for i in range(1,3):
-        soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
-        # get all gif links from page
-        for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
-            gif_urls.append(gif_link.get("data-gif"))
-            gif_thumbs.append(gif_link.get("data-thumb"))
-    # send gifs to inline results
-    results = []
-    for i in range(len(gif_urls)):
-        results.append(InlineQueryResultGif(
-                       id=uuid4(),
-                       gif_url=gif_urls[i],
-                       thumb_url=gif_thumbs[i]))
-    bot.answer_inline_query(update.inline_query.id, results)
-    for i in range(4,6):
-        soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
-        # get all gif links from page
-        for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
-            gif_urls.append(gif_link.get("data-gif"))
-            gif_thumbs.append(gif_link.get("data-thumb"))
-    # add more results after initial search
-    results = []
-    for i in range(len(gif_urls)):
-        results.append(InlineQueryResultGif(
-                       id=uuid4(),
-                       gif_url=gif_urls[i],
-                       thumb_url=gif_thumbs[i]))
-    bot.answer_inline_query(update.inline_query.id, results)
+    for i in range(1,6):
+        gif_urls, gif_thumbs = find_gifs(i, query, gif_urls, gif_thumbs) 
+        # send gifs to inline results
+        results = []
+        for j in range(len(gif_urls)):
+            results.append(InlineQueryResultGif(
+                           id=uuid4(),
+                           gif_url=gif_urls[j],
+                           thumb_url=gif_thumbs[j]))
+        bot.answer_inline_query(update.inline_query.id, results)
 
 
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id,
-                     text="`/giffetteria` query", parse_mode="markdown")
+                     text="Cerca GIF inline `@giffetteriabot` o ricevi una GIF casuale `/giffetteria query`", parse_mode="markdown")
 
 
 update = Updater(token=bot_token)
