@@ -9,7 +9,7 @@ from telegram.utils.helpers import escape_markdown
 from telegram import InlineQueryResultGif, ParseMode, InputTextMessageContent
 
 
-bot_token = "493594627:AAFIdHipf_S-0jfC9N0XJk0VKwrvKEgu8pA"
+bot_token = ""
 
 
 def make_soup(url):
@@ -80,7 +80,7 @@ def inlinequery(bot, update):
                        id=uuid4(),
                        gif_url=gif_urls[i],
                        thumb_url=gif_thumbs[i]))
-    bot.answer_inline_query(update.inline_query.id, results)    
+    bot.answer_inline_query(update.inline_query.id, results)
 
 
 def start(bot, update):
