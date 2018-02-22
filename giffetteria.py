@@ -6,11 +6,10 @@ import random
 import re
 from uuid import uuid4
 from telegram.utils.helpers import escape_markdown
-from telegram import InlineQueryResultArticle, ParseMode, InputTextMessageContent
-import numpy as np
+from telegram import InlineQueryResultGif, ParseMode, InputTextMessageContent
 
 
-bot_token = "493594627:AAEa7D96j6fCsvl_N1qJOnV25DuYp03Nsn4"
+bot_token = "493594627:AAFIdHipf_S-0jfC9N0XJk0VKwrvKEgu8pA"
 
 
 def make_soup(url):
@@ -34,10 +33,9 @@ def giffetteria(bot, update, args):
     else:
         query = ""
     print(query)
-    url = "http://giffetteria.it/?s="
-    soup = make_soup(url + query)
-    # get all gif links from page
     gif_urls = []
+    soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
+    # get all gif links from page
     for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
         gif_urls.append(gif_link.get("data-gif"))
     try:
@@ -51,26 +49,38 @@ def giffetteria(bot, update, args):
 
 def inlinequery(bot, update):
     """Handle the inline query. And looks for gifs"""
-    # TO DO
-    # DOESN'T READ INLINE QUERY
     query = update.inline_query.query
     print(query)
-    url = "http://giffetteria.it/?s="
-    soup = make_soup(url + query)
-    # get all gif links from page
     gif_urls = []
     gif_thumbs = []
-    for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
-        gif_urls.append(gif_link.get("data-gif"))
-        gif_thumbs.append(gif_link.get("data-thumb"))
-    gifs = np.array([gif_urls, gif_thumbs])
+    for i in range(1,3):
+        soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
+        # get all gif links from page
+        for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
+            gif_urls.append(gif_link.get("data-gif"))
+            gif_thumbs.append(gif_link.get("data-thumb"))
     # send gifs to inline results
-    results = [InlineQueryResultArticle(
-               id=uuid4(),
-               gif_url=gifs[0,i],
-               thumb_url=gifs[1,i]) for i in range(gifs.shape[1])]
-    print(gifs)
-    update.inline_query.answer(results)
+    results = []
+    for i in range(len(gif_urls)):
+        results.append(InlineQueryResultGif(
+                       id=uuid4(),
+                       gif_url=gif_urls[i],
+                       thumb_url=gif_thumbs[i]))
+    bot.answer_inline_query(update.inline_query.id, results)
+    for i in range(4,6):
+        soup = make_soup("http://giffetteria.it/page/{}/?s={}".format(i, query))
+        # get all gif links from page
+        for gif_link in soup.find_all("img", attrs={"class": "gl-lazy"}):
+            gif_urls.append(gif_link.get("data-gif"))
+            gif_thumbs.append(gif_link.get("data-thumb"))
+    # add more results after initial search
+    results = []
+    for i in range(len(gif_urls)):
+        results.append(InlineQueryResultGif(
+                       id=uuid4(),
+                       gif_url=gif_urls[i],
+                       thumb_url=gif_thumbs[i]))
+    bot.answer_inline_query(update.inline_query.id, results)    
 
 
 def start(bot, update):
